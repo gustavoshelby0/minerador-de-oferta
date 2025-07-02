@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Facebook Ads Miner - Minerador de Anúncios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #121214;
+            color: #E4E4E7;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #7C3AED;
+            border-radius: 10px;
+            border: 2px solid #1F2937;
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 220px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            @apply px-2 py-1 rounded-full text-xs font-semibold;
+        }
+
+        .sidebar-logo {
+            width: 48px;
+            height: 48px;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            filter: drop-shadow(0 0 2px rgba(124, 58, 237, 0.7));
+            transition: filter 0.3s ease;
+        }
+
+        .sidebar-logo:hover {
+            filter: drop-shadow(0 0 6px rgba(124, 58, 237, 0.9));
+        }
+
+        header.dashboard-header {
+            padding: 1.5rem 2rem;
+            background-color: #1F2937;
+            border-bottom: 1px solid #3B4252;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #A259FF;
+            user-select: none;
+            box-shadow: 0 2px 8px rgb(124 58 237 / 0.3);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .status-validating { 
+            background-color: #F59E0B; 
+            color: #1F2937; 
+            @apply bg-yellow-600 text-yellow-300;
+        }
+        
+        .status-prescale { 
+            background-color: #10B981; 
+            color: #D1FAE5; 
+            @apply bg-blue-600 text-blue-300;
+        }
+        
+        .status-scaling { 
+            background-color: #3B82F6; 
+            color: #DBEAFE; 
+            @apply bg-green-600 text-green-300;
+        }
+        
+        .status-optimizing { 
+            background-color: #6B7280; 
+            color: #D1D5DB; 
+            @apply bg-purple-600 text-purple-300;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background-color: #7C3AED;
+            color: white;
+        }
+
+        .nav-item.active {
+            background-color: #7C3AED;
+            color: white;
+            @apply bg-purple-600 text-white;
+        }
+
+        .loading-spinner {
+            border: 3px solid #374151;
+            border-top: 3px solid #7C3AED;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+
+        /* Estilos para Meta Ad Library */
+        .meta-ad-card {
+            background: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            @apply bg-gray-800 rounded-lg border border-gray-700 shadow-lg mb-6 overflow-hidden;
+        }
+
+        .meta-ad-iframe {
+            width: 100%;
+            height: 400px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .meta-search-container {
+            background: #1F2937;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex h-screen overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <nav class="w-64 bg-gray-800 border-r border-gray-700 min-h-screen">
+        <div class="p-4">
+            <ul class="space-y-2">
+                <li>
+                    <a href="#" id="dashboardMenuBtn" 
+                       class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                       aria-label="Dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="mineracaoMenuBtn" 
+                       class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                       aria-label="Mineração">
+                        <i class="fas fa-pickaxe"></i>
+                        <span>Mineração</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="metaLibraryMenuBtn" 
+                       class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                       aria-label="Meta Library">
+                        <i class="fab fa-meta"></i>
+                        <span>Meta Library</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="indiqueMenuBtn" 
+                       class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                       aria-label="Indique">
+                        <i class="fas fa-share-alt"></i>
+                        <span>Indique & Ganhe</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+        <!-- Header -->
+        <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fab fa-facebook text-blue-500 text-2xl"></i>
+                        <h1 class="text-xl font-bold">Facebook Ads Miner</h1>
+                    </div>
+                    <div id="status-indicator" class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-gray-500 rounded-full pulse"></div>
+                        <span class="text-sm text-gray-400">Conectando...</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="refresh-btn" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-sync-alt mr-2"></i>Atualizar
+                    </button>
+                    <button id="config-btn" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-cog mr-2"></i>Configurar
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden text-center py-12">
+            <i class="fas fa-spinner fa-spin text-6xl text-purple-500 mb-4"></i>
+            <h2 class="text-2xl font-semibold mb-2">Carregando anúncios...</h2>
+            <p class="text-gray-400">Buscando dados da Meta Ad Library</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 hidden">
+            <!-- Stats serão inseridas aqui via JavaScript -->
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="adsTab" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">Anúncios Encontrados</h2>
+                <div class="flex items-center space-x-4">
+                    <input type="search" 
+                           id="searchInput" 
+                           placeholder="Buscar campanhas..." 
+                           aria-label="Buscar campanhas"
+                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                </div>
+            </div>
+            
+            <!-- Container para anúncios minerados -->
+            <div id="anuncios-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-center text-gray-400 col-span-full">Carregando anúncios...</p>
+            </div>
+        </div>
+
+        <!-- Mineração Tab -->
+        <div id="mineracaoTab" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">Anúncios Minerados</h2>
+                <div class="flex items-center space-x-4">
+                    <select id="categoriaFilter" 
+                            aria-label="Filtrar por categoria"
+                            class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500">
+                        <option value="all">Todas Categorias</option>
+                        <option value="tecnologia">Tecnologia</option>
+                        <option value="moda">Moda</option>
+                        <option value="saude">Saúde</option>
+                        <option value="educacao">Educação</option>
+                        <option value="financas">Finanças</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="mineracao-anuncios-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-center text-gray-400 col-span-full">Nenhum anúncio minerado encontrado.</p>
+            </div>
+        </div>
+
+        <!-- Meta Library Tab -->
+        <div id="metaLibraryTab" class="hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-4">Meta Ad Library</h2>
+                <div id="metaConnectionStatus" class="flex items-center space-x-2 mb-4">
+                    <div class="w-2 h-2 bg-gray-500 rounded-full pulse"></div>
+                    <span class="text-sm text-gray-400">Verificando conexão...</span>
+                </div>
+                
+                <div class="flex items-center space-x-4 mb-6">
+                    <input type="text" 
+                           id="metaSearchInput" 
+                           placeholder="Digite uma palavra-chave (ex: iphone, curso, roupa)" 
+                           class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" />
+                    <button id="metaSearchBtn" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-search mr-2"></i>Buscar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Meta -->
+            <div id="metaLoading" class="hidden text-center py-12">
+                <i class="fas fa-spinner fa-spin text-6xl text-purple-500 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Buscando anúncios...</h3>
+                <p class="text-gray-400">Consultando Meta Ad Library</p>
+            </div>
+
+            <!-- Empty State Meta -->
+            <div id="metaEmptyState" class="text-center py-12">
+                <i class="fab fa-meta text-6xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">Meta Ad Library</h3>
+                <p class="text-gray-400 mb-4">Digite uma palavra-chave para buscar anúncios públicos</p>
+            </div>
+
+            <!-- Resultados Meta Library -->
+            <div id="metaResults"></div>
+        </div>
+
+        <!-- Indique Tab -->
+        <div id="indiqueTab" class="hidden">
+            <div class="text-center py-12">
+                <i class="fas fa-gift text-6xl text-purple-500 mb-4"></i>
+                <h2 class="text-2xl font-bold mb-4">Indique & Ganhe</h2>
+                <p class="text-gray-400 mb-6">Compartilhe nossa ferramenta e ganhe benefícios exclusivos!</p>
+                <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    <i class="fas fa-share mr-2"></i>Compartilhar Agora
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-12">
+            <i class="fas fa-search text-6xl text-gray-400 mb-4"></i>
+            <h2 class="text-2xl font-semibold text-gray-300 mb-2">Nenhum anúncio encontrado</h2>
+            <p class="text-gray-400 mb-6">Verifique sua conexão ou tente configurar novamente</p>
+            <button onclick="window.location.reload()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                <i class="fas fa-sync-alt mr-2"></i>Tentar Novamente
+            </button>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+</body>
+</html>
